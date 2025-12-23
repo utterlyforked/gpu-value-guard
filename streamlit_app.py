@@ -1,8 +1,40 @@
 import streamlit as st
 import pandas as pd
+import subprocess
+from datetime import datetime
 from scraper import get_daily_baseline
 
 __version__ = "1.1.0"  # Multi-retailer support with source links
+
+def get_git_version():
+    """
+    Retrieves version info from Git repository.
+    Returns: (commit_hash, commit_date, branch) or fallback version string.
+    """
+    try:
+        # Get short commit hash
+        commit_hash = subprocess.check_output(
+            ['git', 'rev-parse', '--short', 'HEAD'],
+            stderr=subprocess.DEVNULL
+        ).decode('utf-8').strip()
+
+        # Get commit date
+        commit_timestamp = subprocess.check_output(
+            ['git', 'log', '-1', '--format=%ct'],
+            stderr=subprocess.DEVNULL
+        ).decode('utf-8').strip()
+        commit_date = datetime.fromtimestamp(int(commit_timestamp)).strftime('%Y-%m-%d %H:%M')
+
+        # Get current branch
+        branch = subprocess.check_output(
+            ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+            stderr=subprocess.DEVNULL
+        ).decode('utf-8').strip()
+
+        return f"v{__version__} ({commit_hash} on {branch}, {commit_date})"
+    except Exception:
+        # Fallback if not in a git repo or git not available
+        return f"v{__version__}"
 
 st.set_page_config(page_title="Radeon Value Index", layout="centered")
 
@@ -54,4 +86,4 @@ with st.expander("How is the MPP calculated?"):
 
 # 5. Version Footer
 st.divider()
-st.caption(f"Radeon Value Index v{__version__}")
+st.caption(f"Radeon Value Index {get_git_version()}")
