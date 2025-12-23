@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 from scraper import get_daily_baseline
 
+__version__ = "1.1.0"  # Multi-retailer support with source links
+
 st.set_page_config(page_title="Radeon Value Index", layout="centered")
 
 # 1. Fetch Baseline
@@ -44,8 +46,12 @@ st.table(pd.DataFrame(index_results))
 with st.expander("How is the MPP calculated?"):
     st.write("""
     **Formula:** `(Baseline Price * Resolution Weight) * Architecture Modifier`
-    
+
     * **Arch_Mod 1.10 (9000 Series):** High premium for AV1 & DP 2.1.
     * **Arch_Mod 1.00 (7000 Series):** Standard weight for previous gen.
     * **Arch_Mod 0.80 (6000 Series):** 20% penalty for lacking modern encoders/ports.
     """)
+
+# 5. Version Footer
+st.divider()
+st.caption(f"Radeon Value Index v{__version__}")
