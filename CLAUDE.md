@@ -22,6 +22,9 @@ A Streamlit web application that calculates the "Value Target" for AMD Radeon GP
 # Install dependencies
 pip install -r requirements.txt
 
+# Run tests (do this BEFORE committing changes)
+pytest test_app.py -v
+
 # Run development server (default port 8501)
 streamlit run streamlit_app.py
 
@@ -101,6 +104,34 @@ This represents "what you should pay for this GPU considering its performance an
 - A 6950 XT is 33% faster (RWA 1.33) but two gens old (Arch 0.73)
 - Value Target = £330 × 1.33 × 0.73 = £320.66
 - Despite being faster, you shouldn't pay more than the modern baseline due to architectural disadvantages
+
+## Testing
+
+**Running Tests:**
+```bash
+# Run all tests with verbose output
+pytest test_app.py -v
+
+# Run specific test
+pytest test_app.py::test_gpu_data_structure -v
+
+# Run tests and stop on first failure
+pytest test_app.py -x
+```
+
+**What Tests Cover:**
+- **Dependency validation**: All required packages are installed and importable
+- **GPU data structure**: All GPUs have required fields (Name, RWA, Arch, Live, URL)
+- **16GB VRAM requirement**: All GPU names include "16GB"
+- **AMD URL validation**: All URLs point to official AMD product pages
+- **Architecture modifiers**: RDNA 4/3/2 cards have correct Arch values (1.00/0.91/0.73)
+- **Baseline exclusion**: RX 9060 XT is not in GPU_CONFIGS comparison list
+- **Value Target formula**: Calculation logic produces expected results
+
+**IMPORTANT**: Always run tests before committing changes to catch issues like:
+- Missing dependencies (e.g., tabulate for markdown rendering)
+- Invalid GPU data (missing fields, wrong values)
+- Broken imports or circular dependencies
 
 ## Critical Implementation Rules
 
