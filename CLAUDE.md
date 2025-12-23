@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A Streamlit web application that calculates the "Maximum Purchase Price" (MPP) for AMD Radeon GPUs based on a dynamic market baseline. The baseline is the RX 9060 XT (16GB), scraped daily from UK retailers. The MPP formula weights GPUs by resolution performance and penalizes legacy architectures lacking modern features (AV1 encoding, DisplayPort 2.1).
+A Streamlit web application that calculates the "Value Target" for AMD Radeon GPUs based on a dynamic market baseline. The baseline is the RX 9060 XT (16GB), scraped daily from UK retailers. The Value Target formula weights GPUs by gaming performance and applies value retention factors based on architecture generation, helping users identify fair prices for older hardware.
+
+**CRITICAL: 16GB VRAM Only** - This tool exclusively tracks GPUs with 16GB VRAM. VRAM capacity matters for longevity and future-proofing. Never add cards with other VRAM capacities.
 
 **Tech Stack:**
 - Python 3.9+ (specifically 3.11 in devcontainer)
@@ -45,9 +47,10 @@ python -c "from scraper import scrape_ebuyer_uk; print(scrape_ebuyer_uk())"
 **1. `streamlit_app.py` (Main UI)**
 - Entry point for the application
 - Fetches baseline price via `get_daily_baseline()` from scraper module
-- Defines GPU configurations with Resolution Weighted Average (RWA) and Architecture modifiers
-- Calculates MPP using formula: `(Baseline * RWA) * Arch_Modifier`
-- Renders results table and displays verdict (DEAL vs NO DEAL)
+- Defines GPU configurations with Performance Weight (RWA) and Architecture Value Retention modifiers
+- Calculates Value Target using formula: `(Baseline_Price × RWA) × Arch_Modifier`
+- Renders results table showing Value Target vs Current Market price with verdict (DEAL vs NO DEAL)
+- **RX 9060 XT is NOT in the comparison table** - it's the baseline reference only
 
 **2. `scraper.py` (Data Collection)**
 - Contains individual scraper functions for each UK retailer:
@@ -70,19 +73,27 @@ All scrapers follow the same pattern:
 
 The `get_daily_baseline()` function tries all retailers and selects the minimum price.
 
-### MPP Calculation Logic
+### Value Target Calculation Logic
 
-**Formula:** `MPP = (Baseline_Price * Resolution_Weight) * Architecture_Modifier`
+**Formula:** `Value_Target = (Baseline_Price × Performance_Weight) × Architecture_Value_Retention`
 
-**Architecture Modifiers (hardcoded in streamlit_app.py:24-26):**
-- RDNA 4 (9000 Series): 1.10 - Premium for AV1 encoding and DP 2.1
-- RDNA 3 (7000 Series): 1.00 - Standard baseline
-- RDNA 2 (6000 Series): 0.80 - 20% penalty for lacking modern features
+This represents "what you should pay for this GPU considering its performance and the value loss from older architecture."
 
-**Resolution Weighted Average (RWA):**
-- Represents relative performance across resolutions
-- Higher RWA = higher acceptable price ceiling
-- Example: RX 7800 XT has RWA of 1.15 (15% faster than baseline)
+**Architecture Value Retention (hardcoded in streamlit_app.py:24-40):**
+- RDNA 4 (9000 Series): 1.00 - Modern baseline (AV1 encoding, DP 2.1, FSR 4)
+- RDNA 3 (7000 Series): 0.91 - 9% value penalty for lacking modern encoders/ports
+- RDNA 2 (6000 Series): 0.73 - 27% value penalty for two-generation-old architecture
+
+**Performance Weight (RWA - Resolution Weighted Average):**
+- Relative gaming performance compared to RX 9060 XT baseline
+- 1.00 = equal performance, 1.80 = 80% faster, 0.68 = 32% slower
+- Based on real-world gaming benchmarks across multiple resolutions
+- Example: RX 9070 XT has RWA of 1.80 (80% faster than baseline)
+
+**Economic Interpretation:**
+- A 6950 XT is 33% faster (RWA 1.33) but two gens old (Arch 0.73)
+- Value Target = £330 × 1.33 × 0.73 = £320.66
+- Despite being faster, you shouldn't pay more than the modern baseline due to architectural disadvantages
 
 ## Critical Implementation Rules
 
@@ -98,9 +109,13 @@ The `get_daily_baseline()` function tries all retailers and selects the minimum 
 - Show warning caption when using fallback price
 
 **Adding New GPUs:**
-- Add to `gpu_configs` list in streamlit_app.py:23-27
-- Required fields: Name, RWA (resolution weight), Arch (architecture modifier), Live (current market price)
-- MPP calculated automatically in loop at streamlit_app.py:32-33
+- **CRITICAL: Only add 16GB VRAM cards** - verify VRAM capacity before adding
+- Add to `gpu_configs` list in streamlit_app.py:24-40
+- Required fields: Name (must include "16GB"), RWA (performance weight), Arch (value retention), Live (current market price)
+- Value Target calculated automatically in loop at streamlit_app.py:45-46
+- **DO NOT add RX 9060 XT to comparison table** - it's the baseline reference only
+- Group by architecture generation (RDNA 4, RDNA 3, RDNA 2) for clarity
+- Use benchmark data to determine RWA (search "RX [MODEL] vs 9060 XT benchmark")
 
 **Adding New Retailers:**
 - Create scraper function in `scraper.py` following existing pattern
