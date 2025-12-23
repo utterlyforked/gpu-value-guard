@@ -1,40 +1,8 @@
 import streamlit as st
 import pandas as pd
-import subprocess
-from datetime import datetime
 from scraper import get_daily_baseline
 
 __version__ = "1.1.0"  # Multi-retailer support with source links
-
-def get_git_version():
-    """
-    Retrieves version info from Git repository.
-    Returns: (commit_hash, commit_date, branch) or fallback version string.
-    """
-    try:
-        # Get short commit hash
-        commit_hash = subprocess.check_output(
-            ['git', 'rev-parse', '--short', 'HEAD'],
-            stderr=subprocess.DEVNULL
-        ).decode('utf-8').strip()
-
-        # Get commit date
-        commit_timestamp = subprocess.check_output(
-            ['git', 'log', '-1', '--format=%ct'],
-            stderr=subprocess.DEVNULL
-        ).decode('utf-8').strip()
-        commit_date = datetime.fromtimestamp(int(commit_timestamp)).strftime('%Y-%m-%d %H:%M')
-
-        # Get current branch
-        branch = subprocess.check_output(
-            ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
-            stderr=subprocess.DEVNULL
-        ).decode('utf-8').strip()
-
-        return f"v{__version__} ({commit_hash} on {branch}, {commit_date})"
-    except Exception:
-        # Fallback if not in a git repo or git not available
-        return f"v{__version__}"
 
 st.set_page_config(page_title="Radeon Value Index", layout="centered")
 
@@ -47,7 +15,8 @@ st.title("🛡️ Radeon Value Index (UK)")
 if baseline_url:
     st.write(f"**Baseline:** RX 9060 XT (16GB) @ **£{baseline_price:.2f}** from [{baseline_retailer}]({baseline_url})")
 else:
-    st.write(f"**Baseline:** RX 9060 XT (16GB) @ **£{baseline_price:.2f}** ({baseline_retailer})")
+    st.write(f"**Baseline:** RX 9060 XT (16GB) @ **£{baseline_price:.2f}** (using default price)")
+    st.caption("⚠️ Unable to fetch live pricing from retailers. Using fallback baseline.")
 
 # 2. Data & MPP Formula
 # RWA: Resolution Weighted Average | Arch: Architecture Modifier
@@ -86,4 +55,4 @@ with st.expander("How is the MPP calculated?"):
 
 # 5. Version Footer
 st.divider()
-st.caption(f"Radeon Value Index {get_git_version()}")
+st.caption(f"Radeon Value Index v{__version__}")
