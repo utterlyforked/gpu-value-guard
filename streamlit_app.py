@@ -5,10 +5,15 @@ from scraper import get_daily_baseline
 st.set_page_config(page_title="Radeon Value Index", layout="centered")
 
 # 1. Fetch Baseline
-baseline_price = get_daily_baseline()
+baseline_price, baseline_url, baseline_retailer = get_daily_baseline()
 
 st.title("🛡️ Radeon Value Index (UK)")
-st.write(f"**Baseline:** RX 9060 XT (16GB) @ **£{baseline_price:.2f}**")
+
+# Display baseline with source link
+if baseline_url:
+    st.write(f"**Baseline:** RX 9060 XT (16GB) @ **£{baseline_price:.2f}** from [{baseline_retailer}]({baseline_url})")
+else:
+    st.write(f"**Baseline:** RX 9060 XT (16GB) @ **£{baseline_price:.2f}** ({baseline_retailer})")
 
 # 2. Data & MPP Formula
 # RWA: Resolution Weighted Average | Arch: Architecture Modifier
