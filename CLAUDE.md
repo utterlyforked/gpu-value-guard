@@ -42,17 +42,24 @@ python -c "from scraper import scrape_ebuyer_uk; print(scrape_ebuyer_uk())"
 
 ## Architecture
 
-### Two-Module Design
+### Three-Module Design
 
 **1. `streamlit_app.py` (Main UI)**
 - Entry point for the application
 - Fetches baseline price via `get_daily_baseline()` from scraper module
-- Defines GPU configurations with Performance Weight (RWA) and Architecture Value Retention modifiers
+- Imports GPU configurations from `gpu_data.py`
 - Calculates Value Target using formula: `(Baseline_Price × RWA) × Arch_Modifier`
-- Renders results table showing Value Target vs Current Market price with verdict (DEAL vs NO DEAL)
+- Renders results table as markdown (no index column) with clickable AMD product links
 - **RX 9060 XT is NOT in the comparison table** - it's the baseline reference only
 
-**2. `scraper.py` (Data Collection)**
+**2. `gpu_data.py` (GPU Configuration Data)**
+- Central repository for all GPU configurations (`GPU_CONFIGS` list)
+- Each GPU entry contains: Name, RWA, Arch, Live price, and official AMD URL
+- Stores baseline GPU information (`BASELINE_GPU`)
+- **All GPUs must have 16GB VRAM** - this is enforced by design
+- Easy to version control and update independently from application logic
+
+**3. `scraper.py` (Data Collection)**
 - Contains individual scraper functions for each UK retailer:
   - `scrape_scan_uk()` - Scan.co.uk
   - `scrape_overclockers_uk()` - Overclockers UK
@@ -110,11 +117,16 @@ This represents "what you should pay for this GPU considering its performance an
 
 **Adding New GPUs:**
 - **CRITICAL: Only add 16GB VRAM cards** - verify VRAM capacity before adding
-- Add to `gpu_configs` list in streamlit_app.py:24-40
-- Required fields: Name (must include "16GB"), RWA (performance weight), Arch (value retention), Live (current market price)
-- Value Target calculated automatically in loop at streamlit_app.py:45-46
-- **DO NOT add RX 9060 XT to comparison table** - it's the baseline reference only
-- Group by architecture generation (RDNA 4, RDNA 3, RDNA 2) for clarity
+- Add to `GPU_CONFIGS` list in gpu_data.py
+- Required fields:
+  - `Name`: Must include "(16GB)" suffix
+  - `RWA`: Performance weight (benchmark vs 9060 XT)
+  - `Arch`: Architecture value retention (1.00 RDNA4, 0.91 RDNA3, 0.73 RDNA2)
+  - `Live`: Current market price estimate (placeholder until eBay scraping)
+  - `URL`: Official AMD product page (canonical source)
+- AMD URL pattern: `https://www.amd.com/en/products/graphics/desktops/radeon/[SERIES]/amd-radeon-rx-[MODEL].html`
+- **DO NOT add RX 9060 XT to GPU_CONFIGS** - it's in BASELINE_GPU only
+- Group by architecture generation with comments for clarity
 - Use benchmark data to determine RWA (search "RX [MODEL] vs 9060 XT benchmark")
 
 **Adding New Retailers:**
