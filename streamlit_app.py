@@ -17,8 +17,6 @@ else:
     st.write(f"**Baseline:** [{BASELINE_GPU['Name']}]({BASELINE_GPU['URL']}) @ **£{baseline_price:.2f}** (using default price)")
     st.caption("⚠️ Unable to fetch live pricing from retailers. Using fallback baseline.")
 
-st.caption("**16GB VRAM cards only** - VRAM capacity matters for longevity and future-proofing")
-
 # 2. Calculate Value Targets
 index_results = []
 for gpu in GPU_CONFIGS:
